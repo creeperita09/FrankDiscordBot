@@ -1,12 +1,10 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-let imageUrls = new Set(); // Use Set to prevent duplicates
+let imageUrls = new Set();
 
 /**
- * Fetches image URLs from https://www.dingusland.fun/frank
- * using a custom User-Agent header, and stores them in imageUrls set.
- * @returns {Promise<string[]>} An array of unique image source URLs
+ * @returns {Promise<string[]>}
  */
 async function getImageSources() {
     try {
@@ -25,21 +23,19 @@ async function getImageSources() {
 
         $('img').each((_, img) => {
             const $img = $(img);
-
-            // Extract from multiple attributes
-            const src = $img.attr('src');
-            const dataSrc = $img.attr('data-src');
-            const dataImage = $img.attr('data-image');
             const srcset = $img.attr('srcset');
 
-            if (src) imageUrls.add(src);
-            if (dataSrc) imageUrls.add(dataSrc);
-            if (dataImage) imageUrls.add(dataImage);
-
             if (srcset) {
-                // srcset is a comma-separated list of URLs with size indicators
-                const srcsetUrls = srcset.split(',').map(part => part.trim().split(' ')[0]);
-                srcsetUrls.forEach(url => imageUrls.add(url));
+                const highestQualityUrl = srcset.split(',').pop().trim().split(' ')[0];
+                imageUrls.add(highestQualityUrl);
+            } else {
+                const dataImage = $img.attr('data-image');
+                const dataSrc = $img.attr('data-src');
+                const src = $img.attr('src');
+
+                if (dataImage) imageUrls.add(dataImage);
+                else if (dataSrc) imageUrls.add(dataSrc);
+                else if (src) imageUrls.add(src);
             }
         });
 
